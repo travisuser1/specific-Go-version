@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.23  # Upgrade to Go 1.23 as per the ticket
+  - 1.23.x  # Upgrade to Go 1.23 as per the ticket
 
 services:
   - docker  # To run the LXD environment using Docker
