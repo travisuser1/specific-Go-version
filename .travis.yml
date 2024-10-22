@@ -1,7 +1,40 @@
 language: go
+
 go:
-  - 1.22.5
+  - 1.23  # Upgrade to Go 1.23 as per the ticket
+
+services:
+  - docker  # To run the LXD environment using Docker
+
+env:
+  global:
+    - GO111MODULE=on  # Enable Go modules if not already done
+    - SNAPCRAFT_BUILD_ENVIRONMENT=lxd  # Use LXD as the snap build environment
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y lxd  # Ensure LXD is installed
+  - sudo systemctl start lxd
+  - sudo lxd init --auto  # Initialize LXD with default settings
+
+install:
+  - go mod tidy  # Ensure all Go dependencies are up to date
+  - docker build -t lxd-image .  # Build LXD Docker image if needed
 
 script:
   - go build
   - go test
+  - lxc launch ubuntu:focal test-container  # Launch an LXD container for testing
+  - go test -v ./...  # Run tests inside the container or on LXD
+  
+jobs:
+  include:
+    - stage: Build and Test
+      script:
+        - go build
+        - go test
+        - lxc exec test-container -- go test -v ./...
+
+after_success:
+  - docker push your-docker-registry/lxd-image  # Push built image to a registry if needed
+
